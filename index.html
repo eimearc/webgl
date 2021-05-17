@@ -18,18 +18,66 @@
 			renderer.setSize( window.innerWidth, window.innerHeight );
 			document.body.appendChild( renderer.domElement );
 
-			const geometry = new THREE.BoxGeometry();
-			const material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
-			const cube = new THREE.Mesh( geometry, material );
-			scene.add( cube );
+            const vertices = new Float32Array( [
+                -1.0, -1.0,  1.0,
+                1.0, -1.0,  1.0,
+                1.0,  1.0,  1.0,
+                1.0,  1.0,  1.0,
+                -1.0,  1.0,  1.0,
+                -1.0, -1.0,  1.0
+            ] );
+            const numVertices = vertices.length / 3;
+            console.log(numVertices);
+
+			const cubeGeo = new THREE.BufferGeometry();
+            cubeGeo.setAttribute( 'position', new THREE.Float32BufferAttribute( vertices, 3 ) );
+            cubeGeo.computeBoundingSphere();
+			const material = new THREE.MeshBasicMaterial( { color: 0xdddddd } );
+			const cube = new THREE.Mesh( cubeGeo, material );
+			// scene.add( cube );
+
+            const extrudeAmount = 0.1;
+            const lineGeo = new THREE.BufferGeometry();
+            lineGeo.setAttribute( 'position', new THREE.Float32BufferAttribute( vertices, 3 ) );
+            lineGeo.computeBoundingSphere();
+            const lineMat = new THREE.LineBasicMaterial( {
+                color: 0xff0000,
+            });
+            const line = new THREE.Line( lineGeo, lineMat );
+            scene.add( line );
+
+            const pointsGeo = new THREE.BufferGeometry();
+            pointsGeo.setAttribute( 'position', new THREE.Float32BufferAttribute( vertices, 3 ) );
+            pointsGeo.computeBoundingSphere();
+            const pointsMat = new THREE.LineBasicMaterial( {
+                color: 0xff00ff,
+                size: 100.0
+            });
+            const points = new THREE.Points(pointsGeo, pointsMat);
+            scene.add(points);
+
+            const radius = 0.01;
+            const sphereGeo = new THREE.SphereGeometry(radius);
+            const sphereMat = new THREE.MeshBasicMaterial({ color: 0x00ffff });
+            const spheres = new THREE.InstancedMesh( sphereGeo, sphereMat, numVertices);
+            const matrix = new THREE.Matrix4();
+            for (var i = 0; i < numVertices ; ++i) {
+                matrix.setPosition(vertices[3*i],vertices[(3*i)+1],vertices[(3*i)+2]);
+                spheres.setMatrixAt(i, matrix);               
+            }
+            scene.add(spheres)
+
+            const meshes = [cube, line, points, spheres];
 
 			camera.position.z = 5;
 
 			const animate = function () {
 				requestAnimationFrame( animate );
 
-				cube.rotation.x += 0.01;
-				cube.rotation.y += 0.01;
+                meshes.forEach(function(mesh, index, array) {
+                    mesh.rotation.x += 0.01;
+                    mesh.rotation.y += 0.01;
+                })
 
 				renderer.render( scene, camera );
 			};
